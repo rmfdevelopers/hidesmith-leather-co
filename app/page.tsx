@@ -1,243 +1,91 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
-import Image from 'next/image';
-import {
-  Hammer,
-  Shield,
-  Activity,
-  Award,
-  Phone,
-  Mail,
-  MapPin,
-  Menu,
-  X,
-  ArrowRight,
-  Loader2,
-  CheckCheck,
-  ImageOff,
-  Instagram,
-  Compass,
-  Layers,
-  Scissors
-} from 'lucide-react';
-
 // DESIGN DECISIONS:
 // Layout Energy: editorial
 // Depth Treatment: textured
-// Divider Style: D-QUOTE
-// Typography Personality: editorial
+// Divider Style: D-RULE
+// Typography Personality: mono-accent
 
-// ================== CUSTOM HOOKS ==================
+import React, { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
+import { 
+  Shield, 
+  Scissors, 
+  PenTool, 
+  Users, 
+  Heart, 
+  Clock, 
+  ArrowRight, 
+  Loader2, 
+  CheckCheck, 
+  ImageOff, 
+  Menu, 
+  X, 
+  Instagram, 
+  MessageSquare 
+} from 'lucide-react';
 
-const useScrollReveal = (threshold = 0.15) => {
+// === SAFE IMAGE COMPONENT ===
+function SafeImage({ src, alt, fill, width, height, className, priority, fallbackClassName }: {
+  src: string; alt: string; fill?: boolean; width?: number; height?: number;
+  className?: string; priority?: boolean; fallbackClassName?: string;
+}) {
+  const [error, setError] = useState(false);
+  if (error) {
+    return (
+      <div className={`flex items-center justify-center bg-gradient-to-br from-[#1A1A1A]/80 to-[#8B5A2B]/20 ${fallbackClassName ?? className ?? ''}`}>
+        <ImageOff size={28} className="text-white/20" />
+      </div>
+    );
+  }
+  return (
+    <Image src={src} alt={alt} fill={fill}
+      width={!fill ? (width ?? 800) : undefined}
+      height={!fill ? (height ?? 600) : undefined}
+      className={className} priority={priority}
+      onError={() => setError(true)} />
+  );
+}
+
+// === SCROLL REVEAL HOOK ===
+const useScrollReveal = (threshold = 0.1) => {
   const ref = useRef<HTMLElement>(null);
   const [isVisible, setIsVisible] = useState(false);
-
   useEffect(() => {
     const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) setIsVisible(true);
-      },
+      ([entry]) => { if (entry.isIntersecting) setIsVisible(true); },
       { threshold }
     );
     if (ref.current) observer.observe(ref.current);
     return () => observer.disconnect();
   }, [threshold]);
-
   return { ref, isVisible };
 };
 
-const useTypewriter = (text: string, speed = 55) => {
-  const [display, setDisplay] = useState('');
-
-  useEffect(() => {
-    let i = 0;
-    const timer = setInterval(() => {
-      if (i < text.length) {
-        setDisplay(prev => prev + text.charAt(i));
-        i++;
-      } else {
-        clearInterval(timer);
-      }
-    }, speed);
-    return () => clearInterval(timer);
-  }, [text, speed]);
-
-  return display;
-};
-
-// ================== SAFE IMAGE COMPONENT ==================
-
-function SafeImage({
-  src,
-  alt,
-  fill,
-  width,
-  height,
-  className,
-  priority,
-  fallbackClassName
-}: {
-  src: string;
-  alt: string;
-  fill?: boolean;
-  width?: number;
-  height?: number;
-  className?: string;
-  priority?: boolean;
-  fallbackClassName?: string;
-}) {
-  const [error, setError] = useState(false);
-
-  if (error) {
-    return (
-      <div className={`flex items-center justify-center bg-gradient-to-br from-primary/60 to-secondary/15 ${fallbackClassName ?? className ?? ''}`}>
-        <ImageOff size={28} className="text-accent/20" />
-      </div>
-    );
-  }
-
-  return (
-    <Image
-      src={src}
-      alt={alt}
-      fill={fill}
-      width={!fill ? (width ?? 800) : undefined}
-      height={!fill ? (height ?? 600) : undefined}
-      className={className}
-      priority={priority}
-      onError={() => setError(true)}
-    />
-  );
-}
-
-// ================== DATA DEFINITIONS ==================
-
-const BRAND = {
-  name: "Hidesmith Leather Co.",
-  tagline: "Built by Hand, Built to Last.",
-  description: "Bespoke handcrafted leather bags, wallets, and accessories meticulously constructed in Lagos for those who appreciate lifetime durability.",
-  industry: "fashion",
-  region: "nigeria",
-  currency: "₦"
-};
-
-const IMAGES = {
-  hero: "https://images.unsplash.com/photo-1637759292654-a12cb2be085e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4ODY1NzJ8MHwxfHNlYXJjaHwxfHxhcnRpc2FuJTIwbGVhdGhlciUyMGNyYWZ0c21hbiUyMHN0aXRjaGluZyUyMGElMjBiYWclMjBjbG9zZSUyMHVwfGVufDF8MHx8fDE3ODE2ODkzNDd8MA&ixlib=rb-4.1.0&q=80&w=1080",
-  products: [
-    "https://images.unsplash.com/photo-1633655442432-620aa55d7ac1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4ODY1NzJ8MHwxfHNlYXJjaHwyfHxwcmVtaXVtJTIwZmFzaGlvbnxlbnwwfDB8fHwxNzgxNjg5MzQ2fDA&ixlib=rb-4.1.0&q=80&w=1080",
-    "https://images.unsplash.com/photo-1764065339893-e18c6128c36f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4ODY1NzJ8MHwxfHNlYXJjaHwxfHxBcnRpc2FuJTIwYnJvd24lMjBsZWF0aGVyJTIwYnJpZWZjYXNlJTIwb24lMjBkYXJrJTIwd29vZCUyMGJhY2tncm91bmR8ZW58MXwwfHx8MTc4MTY4OTM0N3ww&ixlib=rb-4.1.0&q=80&w=1080",
-    "https://images.unsplash.com/photo-1769981271695-bb3d766ee419?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4ODY1NzJ8MHwxfHNlYXJjaHw0fHxwcmVtaXVtJTIwZmFzaGlvbnxlbnwwfDB8fHwxNzgxNjg5MzQ2fDA&ixlib=rb-4.1.0&q=80&w=1080",
-    "https://images.unsplash.com/photo-1639789972200-4c5dafacb6fd?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4ODY1NzJ8MHwxfHNlYXJjaHwxfHxDaGFyY29hbCUyMGJsYWNrJTIwaGFuZCUyMHN0aXRjaEJlbHR8ZW58MXwwfHx8MTc4MTY4OTM0OHww&ixlib=rb-4.1.0&q=80&w=1080"
-  ]
-};
-
-const PRODUCTS = [
-  {
-    name: "The Nomad Duffle",
-    description: "Full-grain heritage leather travel duffle designed for rugged weekend escapes.",
-    price: "₦450,000",
-    image: IMAGES.products[0]
-  },
-  {
-    name: "The Ikoyi Briefcase",
-    description: "Sleek, structure-hardened carryall with raw hand-stitched detailing.",
-    price: "₦350,000",
-    image: IMAGES.products[1]
-  },
-  {
-    name: "The Artisan Tote",
-    description: "Spacious everyday carry forged from premium vegetable-tanned shoulder cuts.",
-    price: "₦180,000",
-    image: IMAGES.products[2]
-  },
-  {
-    name: "The Eko Fold Wallet",
-    description: "Ultra-slim, hand-sewn cardholder made to weather and patina beautifully.",
-    price: "₦35,000",
-    image: IMAGES.products[3]
-  }
-];
-
-const FEATURES = [
-  {
-    title: "Bespoke Craftsmanship",
-    description: "Every single stitch is hand-thrown using thick waxed polyester thread for indestructible seams.",
-    iconName: "Hammer"
-  },
-  {
-    title: "Full-Grain Leather",
-    description: "We source premium vegetable-tanned hides that wear in, never wear out.",
-    iconName: "Shield"
-  },
-  {
-    title: "Lifetime Warranty",
-    description: "Our hardware, rivets, and stitching are guaranteed to survive a lifetime of movement.",
-    iconName: "Activity"
-  }
-];
-
-const TESTIMONIALS = [
-  {
-    name: "Oluwaseun A.",
-    text: "The Ikoyi briefcase feels like solid armor. I've used it daily for two years and the patina gets better every week. Truly built like a tank.",
-    role: "Creative Director"
-  },
-  {
-    name: "Chidi O.",
-    text: "You can smell the absolute quality the moment you unbox. The hand-stitching makes modern designer brand bags look cheap.",
-    role: "Architect"
-  },
-  {
-    name: "Fatima Y.",
-    text: "Commissioned a custom duffle for travel. The leather is thick, the brass is solid, and the craftsmanship is a masterclass in details.",
-    role: "Global Traveler"
-  }
-];
-
-const STEPS = [
-  {
-    number: "01",
-    title: "Hide Curation",
-    description: "We hand-select heavy-grade Nigerian hides, looking specifically for natural characteristics that tell an authentic story."
-  },
-  {
-    number: "02",
-    title: "Manual Awl Punching",
-    description: "Every seam path is measured and hand-punched with a traditional diamond awl to ensure ultimate visual alignment."
-  },
-  {
-    number: "03",
-    title: "Saddle Stitching",
-    description: "Constructed using two independent needles crossing on a single wax-braided thread. Stronger than any machine lock-stitch."
-  }
-];
-
-const STATS = [
-  { number: "14k+", label: "Collectors" },
-  { number: "100%", label: "Hand Saddle-Stitched" },
-  { number: "Lifetime", label: "Guarantee" }
-];
-
 export default function Home() {
+  // Navigation & Scroll State
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  // Scroll effect
+  
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 60);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    const onScroll = () => setScrolled(window.scrollY > 60);
+    window.addEventListener('scroll', onScroll);
+    return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  // Typewriter Hook
-  const typedText = useTypewriter("Bespoke Leather Goods Crafted for Generations.");
+  // Contact Form State
+  const [form, setForm] = useState({ name: '', email: '', phone: '', message: '' });
+  const [sent, setSent] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  // Section Refs (For Reveal Animations)
-  const heroReveal = useScrollReveal(0.1);
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setTimeout(() => { setLoading(false); setSent(true); }, 1500);
+  };
+
+  // Section Refs for Animation Map
+  const heroReveal = useScrollReveal(0.05);
   const featuresReveal = useScrollReveal(0.15);
   const productsReveal = useScrollReveal(0.1);
   const processReveal = useScrollReveal(0.15);
@@ -245,220 +93,139 @@ export default function Home() {
   const testimonialsReveal = useScrollReveal(0.15);
   const contactReveal = useScrollReveal(0.15);
 
-  // Universal Contact Form State
-  const [form, setForm] = useState({ name: '', email: '', phone: '', message: '' });
-  const [sent, setSent] = useState(false);
-  const [loading, setLoading] = useState(false);
-
-  const handleFormSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      setSent(true);
-    }, 1500);
-  };
-
-  // Nav Click Handler
-  const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, targetId: string) => {
-    e.preventDefault();
-    const element = document.getElementById(targetId);
-    if (element) {
-      const offset = 80;
-      const bodyRect = document.body.getBoundingClientRect().top;
-      const elementRect = element.getBoundingClientRect().top;
-      const elementPosition = elementRect - bodyRect;
-      const offsetPosition = elementPosition - offset;
-
-      window.scrollTo({
-        top: offsetPosition,
-        behavior: 'smooth'
-      });
+  // Map Icons Dynamically
+  const getFeatureIcon = (iconName: string) => {
+    switch (iconName) {
+      case 'Shield': return <Shield className="text-[#C19A6B]" size={24} />;
+      case 'Scissors': return <Scissors className="text-[#C19A6B]" size={24} />;
+      case 'PenTool': return <PenTool className="text-[#C19A6B]" size={24} />;
+      default: return <Shield className="text-[#C19A6B]" size={24} />;
     }
-    setMobileMenuOpen(false);
   };
 
   return (
-    <div className="min-h-screen bg-[#1E1E1E] text-white selection:bg-secondary selection:text-primary relative font-sans">
+    <div className="min-h-screen bg-[#1A1A1A] selection:bg-[#C19A6B]/30 selection:text-white">
       
-      {/* Background Texture Overlay */}
-      <div className="fixed inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] pointer-events-none z-50 mix-blend-overlay" />
-
-      {/* ================== SCROLL-AWARE NAVIGATION ================== */}
-      <header className={`fixed top-0 left-0 right-0 z-40 transition-all duration-500 border-b ${
-        scrolled 
-          ? 'bg-[#1E1E1E]/95 backdrop-blur-xl shadow-2xl border-white/5 py-4' 
-          : 'bg-transparent border-transparent py-6'
-      }`}>
-        <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-          
-          {/* Logo Style L1 - Premium Initial Box */}
-          <a href="#home" onClick={(e) => handleNavClick(e, 'home')} className="flex items-center gap-3 group">
-            <div className="w-10 h-10 border border-secondary flex items-center justify-center font-bold text-lg bg-[#1E1E1E] tracking-tighter text-secondary group-hover:bg-secondary group-hover:text-primary transition-all duration-300">
+      {/* === HEADER === */}
+      <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-[#1A1A1A]/95 backdrop-blur-xl shadow-xl py-4 border-b border-white/5' : 'bg-transparent py-6'}`}>
+        <div className="max-w-7xl mx-auto px-6 md:px-12 flex items-center justify-between">
+          <a href="#hero" className="flex items-center gap-3 group">
+            <div className="w-10 h-10 rounded-lg bg-[#C19A6B] flex items-center justify-center font-heading font-bold text-black text-xl tracking-tighter">
               H
             </div>
-            <div className="flex flex-col">
-              <span className="font-heading font-black text-lg leading-none tracking-tight text-white">HIDESMITH</span>
-              <span className="text-[10px] uppercase font-mono tracking-widest text-secondary mt-0.5">LEATHER CO.</span>
-            </div>
+            <span className="font-heading text-xl font-bold tracking-widest text-white group-hover:text-[#C19A6B] transition-colors duration-300">
+              HIDESMITH
+            </span>
           </a>
 
-          {/* Desktop Nav Links */}
+          {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-8">
-            {[
-              { name: "Home", id: "home" },
-              { name: "Creed", id: "features" },
-              { name: "Collection", id: "products" },
-              { name: "Process", id: "process" },
-              { name: "About", id: "about" }
-            ].map((link) => (
-              <a
-                key={link.id}
-                href={`#${link.id}`}
-                onClick={(e) => handleNavClick(e, link.id)}
-                className="text-accent/65 hover:text-white transition-colors duration-300 text-sm font-medium tracking-wide uppercase"
-              >
-                {link.name}
-              </a>
-            ))}
+            <a href="#hero" className="text-white/75 hover:text-[#C19A6B] font-mono text-xs tracking-widest uppercase transition-colors">Home</a>
+            <a href="#features" className="text-white/75 hover:text-[#C19A6B] font-mono text-xs tracking-widest uppercase transition-colors">Craft</a>
+            <a href="#products" className="text-white/75 hover:text-[#C19A6B] font-mono text-xs tracking-widest uppercase transition-colors">Gallery</a>
+            <a href="#about" className="text-white/75 hover:text-[#C19A6B] font-mono text-xs tracking-widest uppercase transition-colors">Our Story</a>
+            <a href="#contact" className="bg-[#C19A6B] text-black px-6 py-2.5 rounded-full font-mono text-xs font-bold tracking-wider hover:brightness-110 transition duration-300">
+              Order Bespoke
+            </a>
           </nav>
 
-          {/* Nav CTA */}
-          <div className="hidden md:block">
-            <a
-              href="#contact"
-              onClick={(e) => handleNavClick(e, 'contact')}
-              className="border border-secondary text-secondary hover:bg-secondary hover:text-primary transition-all duration-300 font-bold text-xs tracking-widest uppercase px-6 py-2.5 rounded-full"
-            >
-              Commission Piece
-            </a>
-          </div>
-
           {/* Mobile Menu Button */}
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden text-white/85 hover:text-white transition-colors p-2"
-            aria-label="Toggle menu"
-          >
-            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          <button onClick={() => setMobileMenuOpen(true)} className="md:hidden text-white hover:text-[#C19A6B] transition-colors">
+            <Menu size={24} />
           </button>
         </div>
       </header>
 
-      {/* Mobile Sidebar (Solid Background) */}
-      <div className={`fixed inset-0 bg-[#1E1E1E] z-40 transition-transform duration-500 ease-in-out md:hidden ${
-        mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
-      }`}>
-        <div className="flex flex-col h-full justify-between p-8 pt-24">
-          <div className="flex flex-col gap-6">
-            {[
-              { name: "Home", id: "home" },
-              { name: "Creed", id: "features" },
-              { name: "Collection", id: "products" },
-              { name: "Process", id: "process" },
-              { name: "About", id: "about" },
-              { name: "Contact", id: "contact" }
-            ].map((link) => (
-              <a
-                key={link.id}
-                href={`#${link.id}`}
-                onClick={(e) => handleNavClick(e, link.id)}
-                className="font-heading text-4xl font-bold text-accent hover:text-secondary transition-colors"
-              >
-                {link.name}
-              </a>
-            ))}
-          </div>
-
-          <div className="border-t border-white/10 pt-8 space-y-4">
-            <p className="text-white/40 text-xs uppercase tracking-widest font-mono">Lagos, Nigeria</p>
-            <div className="flex gap-4">
-              <a href="https://wa.me/c/2348023456789" className="text-secondary hover:text-white transition-colors">WhatsApp</a>
-              <a href="https://instagram.com/hidesmith.ng" className="text-secondary hover:text-white transition-colors">Instagram</a>
+      {/* Mobile Sidebar */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm md:hidden flex justify-end">
+          <div className="w-[75%] max-w-sm bg-[#1A1A1A] h-full p-8 flex flex-col justify-between border-l border-white/10 shadow-2xl relative">
+            <div>
+              <div className="flex items-center justify-between mb-12">
+                <span className="font-heading text-lg font-bold tracking-widest text-[#C19A6B]">HIDESMITH</span>
+                <button onClick={() => setMobileMenuOpen(false)} className="text-white/60 hover:text-white">
+                  <X size={24} />
+                </button>
+              </div>
+              <nav className="flex flex-col gap-6">
+                <a href="#hero" onClick={() => setMobileMenuOpen(false)} className="text-xl font-heading text-white hover:text-[#C19A6B] transition-colors">Home</a>
+                <a href="#features" onClick={() => setMobileMenuOpen(false)} className="text-xl font-heading text-white hover:text-[#C19A6B] transition-colors">The Standard</a>
+                <a href="#products" onClick={() => setMobileMenuOpen(false)} className="text-xl font-heading text-white hover:text-[#C19A6B] transition-colors">Signature Pieces</a>
+                <a href="#about" onClick={() => setMobileMenuOpen(false)} className="text-xl font-heading text-white hover:text-[#C19A6B] transition-colors">Our Story</a>
+              </nav>
             </div>
+            <a href="#contact" onClick={() => setMobileMenuOpen(false)} className="bg-[#C19A6B] text-black w-full py-4 text-center rounded-xl font-mono text-sm font-bold tracking-widest hover:brightness-110 transition duration-300">
+              ORDER BESPOKE
+            </a>
           </div>
         </div>
-      </div>
+      )}
 
 
-      {/* ================== HERO-D: RAW MINIMAL TYPEWRITER ================== */}
-      <section
-        id="home"
-        ref={heroReveal.ref}
-        className="min-h-screen flex flex-col justify-center bg-black px-6 overflow-hidden relative pt-20"
-      >
-        {/* Dynamic Texture Background Grid (Only because of premium style overlay) */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff02_1px,transparent_1px),linear-gradient(to_bottom,#ffffff02_1px,transparent_1px)] bg-[size:50px_50px]" />
+      {/* === HERO SECTION (HR-A Variant) === */}
+      <section id="hero" ref={heroReveal.ref} className="min-h-screen relative flex items-center justify-center bg-gradient-to-br from-[#1A1A1A] via-[#1A1A1A]/95 to-[#8B5A2B]/10 px-6 overflow-hidden pt-24">
+        <div className="absolute top-1/4 left-1/4 w-[32rem] h-[32rem] bg-[#8B5A2B]/5 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute bottom-1/4 right-1/3 w-64 h-64 bg-[#C19A6B]/5 rounded-full blur-[80px] pointer-events-none" />
         
-        {/* Floating Background Image Layer */}
-        <div className="absolute inset-0 opacity-15 grayscale mix-blend-screen pointer-events-none transition-transform duration-1000 scale-105">
-          <SafeImage src={IMAGES.hero} alt="Artisan at work" fill className="object-cover" priority />
+        {/* Layered Textured Hero Background Integration */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full opacity-[0.12] max-w-5xl max-h-[70vh] rounded-[3xl] overflow-hidden rotate-2 pointer-events-none">
+          <SafeImage src="https://images.unsplash.com/photo-1631396326628-3105f48b6f2b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080" alt="Bespoke Workspace" fill className="object-cover" priority />
         </div>
 
-        <div className="relative z-10 max-w-6xl mx-auto w-full">
-          <h1 className="font-heading text-[11vw] md:text-[7vw] font-black text-white leading-none tracking-tighter uppercase italic min-h-[14vw] md:min-h-[9vw]">
-            {typedText}<span className="text-secondary animate-pulse">_</span>
+        <div className={`relative z-10 text-center max-w-4xl mx-auto transition-all duration-1000 ${heroReveal.isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'}`}>
+          <h1 className="font-heading text-5xl md:text-8xl font-black text-white leading-[1.05] tracking-tight">
+            Bespoke Leather Goods <span className="text-[#C19A6B]">Made to Last</span> a Lifetime
           </h1>
-          
-          <div className={`mt-12 flex flex-col md:flex-row items-start md:items-end justify-between gap-10 border-t border-white/10 pt-10 transition-all duration-1000 ${
-            heroReveal.isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
-          }`}>
-            <p className="text-accent/40 text-base md:text-lg max-w-lg leading-relaxed font-light">
-              {BRAND.description} Each piece is meticulously cut, punched, and saddle-stitched by hand in our Lagos workshop.
-            </p>
-            <a
-              href="#contact"
-              onClick={(e) => handleNavClick(e, 'contact')}
-              className="bg-secondary text-primary px-12 py-5 font-bold text-lg uppercase tracking-wider
-                shadow-[6px_6px_0px_rgba(230,222,212,0.15)]
-                hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-[3px_3px_0px_rgba(230,222,212,0.15)]
-                transition-all duration-300 shrink-0"
-            >
-              Commission Your Piece
+          <p className="text-white/60 mt-8 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed font-sans">
+            Meticulously handcrafted in Lagos, combining rugged refinement with raw heritage craftsmanship.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mt-12">
+            <a href="#products" className="bg-[#C19A6B] text-black px-10 py-4 font-bold text-sm tracking-wider uppercase hover:brightness-110 hover:scale-105 transition-all duration-300 rounded-full">
+              Explore the Collection
+            </a>
+            <a href="#about" className="border border-white/20 text-white px-10 py-4 font-medium text-sm tracking-wider uppercase hover:bg-white/5 transition-all duration-300 rounded-full">
+              The Craft Story
             </a>
           </div>
         </div>
       </section>
 
 
-      {/* ================== DIVIDER 1: D-QUOTE ================== */}
-      <div className="py-28 px-8 text-center bg-secondary/[0.03] border-y border-white/5 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(200,138,88,0.06),transparent_70%)]" />
-        <p className="relative font-heading text-3xl md:text-5xl font-black text-white max-w-3xl mx-auto leading-tight italic">
-          &ldquo;{BRAND.tagline}&rdquo;
-        </p>
-        <p className="relative text-secondary font-mono mt-6 text-xs tracking-[0.4em] uppercase">{BRAND.name}</p>
+      {/* === TRANSITION DIVIDER === */}
+      <div className="py-16 flex items-center gap-8 px-8 max-w-6xl mx-auto">
+        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-[#C19A6B]/40 to-transparent" />
+        <span className="text-[#C19A6B] font-mono text-xs tracking-[0.4em] uppercase whitespace-nowrap opacity-75">
+          BUILT BY HAND, BUILT TO LAST.
+        </span>
+        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-[#C19A6B]/40 to-transparent" />
       </div>
 
 
-      {/* ================== CREED SECTION (FEATURES): F-NUMBERED ================== */}
-      <section id="features" ref={featuresReveal.ref} className="py-28 px-6 bg-[#1E1E1E]">
+      {/* === FEATURES SECTION (F-NUMBERED Variant) === */}
+      <section id="features" ref={featuresReveal.ref} className="py-28 px-6 bg-[#1A1A1A] relative">
         <div className="max-w-5xl mx-auto">
-          <div className="mb-20 text-left">
-            <span className="text-secondary font-mono text-xs tracking-[0.4em] uppercase">The Hidesmith Creed</span>
-            <h2 className="font-heading text-4xl md:text-6xl font-black text-white mt-4">Why Hand-Stitched Leather Lasts Longer</h2>
+          <div className="mb-16">
+            <p className="text-[#C19A6B] font-mono text-xs tracking-[0.3em] uppercase mb-3">THE HIDESMITH STANDARD</p>
+            <h2 className="font-heading text-4xl md:text-6xl font-black text-white">No shortcuts. No synthetic fillers. Just raw, honest craftsmanship.</h2>
           </div>
-
-          <div className="divide-y divide-white/10">
-            {FEATURES.map((f, i) => (
-              <div
-                key={i}
-                className={`py-12 flex flex-col md:flex-row items-start gap-10 transition-all duration-700 ${
-                  featuresReveal.isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
-                }`}
-                style={{ transitionDelay: `${i * 100}ms` }}
-              >
-                <span className="font-mono text-secondary/30 text-4xl font-black tracking-tighter shrink-0 w-16">
+          
+          <div className="divide-y divide-white/10 border-t border-b border-white/10">
+            {[
+              { title: "Full-Grain Leather", description: "We source the highest quality local and imported hides that age gracefully, developing a rich patina.", icon: "Shield" },
+              { title: "Saddle Stitched by Hand", description: "Every single stitch is sewn meticulously using traditional hand methods that outlast machine stitching.", icon: "Scissors" },
+              { title: "Bespoke Tailoring", description: "Personalize your hardware, pocket configurations, and monogram for an heirloom built uniquely for you.", icon: "PenTool" }
+            ].map((f, i) => (
+              <div key={i} className={`py-12 flex flex-col md:flex-row items-start gap-10 transition-all duration-1000 ${featuresReveal.isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'}`}
+                style={{ transitionDelay: `${i * 150}ms` }}>
+                <span className="font-mono text-[#C19A6B]/40 text-4xl font-black tracking-tighter shrink-0 w-16">
                   {String(i + 1).padStart(2, '0')}
                 </span>
                 <div className="flex-1">
-                  <h3 className="font-heading text-2xl font-bold text-white tracking-tight">{f.title}</h3>
-                  <p className="text-accent/50 mt-3 max-w-xl leading-relaxed text-sm md:text-base">{f.description}</p>
+                  <h3 className="font-heading text-2xl md:text-3xl font-bold text-white mb-3">{f.title}</h3>
+                  <p className="text-white/50 text-base md:text-lg max-w-xl leading-relaxed">{f.description}</p>
                 </div>
-                <div className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center shrink-0 text-secondary">
-                  {f.iconName === 'Hammer' && <Hammer size={20} />}
-                  {f.iconName === 'Shield' && <Shield size={20} />}
-                  {f.iconName === 'Activity' && <Activity size={20} />}
+                <div className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center shrink-0 text-[#C19A6B]/80 hover:bg-[#C19A6B]/10 transition-colors">
+                  {getFeatureIcon(f.icon)}
                 </div>
               </div>
             ))}
@@ -467,142 +234,121 @@ export default function Home() {
       </section>
 
 
-      {/* ================== DIVIDER 2: D-RULE ================== */}
-      <div className="py-12 flex items-center gap-8 px-8 max-w-6xl mx-auto">
-        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-secondary/40 to-transparent" />
-        <span className="text-secondary font-mono text-xs tracking-[0.4em] uppercase whitespace-nowrap opacity-70">
-          The core collection
-        </span>
-        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-secondary/40 to-transparent" />
-      </div>
-
-
-      {/* ================== COLLECTION SECTION (PRODUCTS): P-ASYMMETRIC ================== */}
-      <section id="products" ref={productsReveal.ref} className="py-28 px-6 bg-black/40">
+      {/* === PRODUCTS SECTION (P-ASYMMETRIC Variant) === */}
+      <section id="products" ref={productsReveal.ref} className="py-28 px-6 bg-[#212121]">
         <div className="max-w-6xl mx-auto">
-          
-          <div className="flex flex-col md:flex-row items-start md:items-end justify-between mb-16">
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
             <div>
-              <span className="text-secondary font-mono text-xs tracking-[0.4em] uppercase">Bespoke Carry</span>
-              <h2 className="font-heading text-4xl md:text-6xl font-black text-white mt-4 max-w-md">The Core Collection</h2>
+              <p className="text-[#C19A6B] font-mono text-xs tracking-[0.3em] uppercase mb-3">OUR SIGNATURE PIECES</p>
+              <h2 className="font-heading text-4xl md:text-6xl font-black text-white max-w-lg leading-tight">
+                Individually handcrafted and numbered essentials.
+              </h2>
             </div>
-            <p className="text-accent/40 max-w-xs mt-4 md:mt-0 md:text-right font-light text-sm md:text-base">
-              Meticulously built to order. Each piece is a unique execution of raw aesthetic and rugged functionality.
+            <p className="text-white/40 max-w-xs text-sm md:text-base md:text-right font-sans leading-relaxed">
+              Every single piece is prepared to order in our local studio, carrying its own stamp of origin.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-            
-            {/* Featured Product Large Left Column */}
-            <div className="md:col-span-7 group relative rounded-3xl overflow-hidden bg-[#1E1E1E] border border-white/5 shadow-2xl transition-all duration-500 hover:border-secondary/30">
+            {/* Featured Product: The Vanguard Duffle */}
+            <div className={`md:col-span-7 group relative rounded-3xl overflow-hidden border border-white/10 hover:border-[#C19A6B]/50 transition-all duration-700 ${productsReveal.isVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
               <div className="relative h-[480px]">
-                <SafeImage
-                  src={PRODUCTS[0].image}
-                  alt={PRODUCTS[0].name}
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-700"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
-                
+                <SafeImage src="https://images.unsplash.com/photo-1644258676710-ffb99d7d7a1b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080" alt="The Vanguard Duffle" fill className="object-cover group-hover:scale-105 transition-transform duration-700" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
                 <div className="absolute bottom-0 p-8 w-full">
-                  <span className="text-secondary font-mono text-xs tracking-widest uppercase mb-1 block">Featured Carry</span>
-                  <h3 className="font-heading text-3xl font-black text-white tracking-tight">{PRODUCTS[0].name}</h3>
-                  
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-3">
-                    <p className="text-accent/60 text-sm max-w-sm">{PRODUCTS[0].description}</p>
-                    <span className="text-secondary font-black text-2xl shrink-0">{PRODUCTS[0].price}</span>
+                  <div className="flex justify-between items-start gap-4">
+                    <div>
+                      <span className="font-mono text-xs text-[#C19A6B] uppercase tracking-wider block mb-2">01 / Featured Duffle</span>
+                      <h3 className="font-heading text-3xl font-black text-white">The Vanguard Duffle</h3>
+                    </div>
+                    <span className="text-[#C19A6B] font-heading text-2xl font-bold">₦420,000</span>
                   </div>
-                  
-                  <div className="mt-6 flex gap-4">
-                    <a
-                      href="#contact"
-                      onClick={(e) => handleNavClick(e, 'contact')}
-                      className="bg-secondary text-primary px-8 py-3 rounded-full font-bold text-sm hover:brightness-110 transition-all duration-300"
-                    >
-                      Commission Now
-                    </a>
-                  </div>
+                  <p className="text-white/60 text-sm md:text-base mt-3 max-w-md leading-relaxed font-sans">
+                    Indestructible full-grain leather travel duffle featuring brass hardware and a lifetime warranty.
+                  </p>
+                  <a href="#contact" className="inline-block mt-6 bg-[#C19A6B] text-black px-6 py-2.5 rounded-full font-mono text-xs font-bold tracking-wider hover:brightness-110 transition">
+                    ORDER THIS PIECE
+                  </a>
                 </div>
               </div>
             </div>
 
-            {/* Right Column Smaller Grid */}
-            <div className="md:col-span-5 grid grid-rows-1 gap-6">
-              <div className="space-y-6">
-                {PRODUCTS.slice(1, 4).map((p, i) => (
-                  <div
-                    key={i}
-                    className="group bg-[#1E1E1E] p-6 rounded-3xl border border-white/5 hover:border-secondary/30 transition-all duration-300 flex items-center gap-6"
-                  >
-                    <div className="relative w-28 h-28 rounded-2xl overflow-hidden shrink-0 bg-black/40">
-                      <SafeImage
-                        src={p.image}
-                        alt={p.name}
-                        fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-700"
-                      />
-                    </div>
-                    
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-heading text-xl font-bold text-white tracking-tight truncate">{p.name}</h3>
-                      <p className="text-accent/40 text-xs mt-1 line-clamp-2">{p.description}</p>
-                      
-                      <div className="flex items-center justify-between mt-4">
-                        <span className="text-secondary font-black text-sm">{p.price}</span>
-                        <a
-                          href="#contact"
-                          onClick={(e) => handleNavClick(e, 'contact')}
-                          className="text-xs text-accent/60 hover:text-secondary font-mono transition-colors flex items-center gap-1"
-                        >
-                          Enquire <ArrowRight size={12} />
-                        </a>
+            {/* Side Grid Products */}
+            <div className="md:col-span-5 grid grid-rows-2 gap-6">
+              {[
+                { name: "Saddleback Messenger", price: "₦185,000", description: "Structured, heritage-grade shoulder bag.", url: "https://images.unsplash.com/photo-1647502210988-19681f03a7a0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080" },
+                { name: "Minimalist Billfold Wallet", price: "₦38,000", description: "Sleek, hand-stitched deep charcoal carry.", url: "https://images.unsplash.com/photo-1629958513881-a086d21383cd?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080" }
+              ].map((p, i) => (
+                <div key={i} className={`group relative rounded-3xl overflow-hidden border border-white/10 hover:border-[#C19A6B]/50 transition-all duration-700 ${productsReveal.isVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`} style={{ transitionDelay: `${(i + 1) * 200}ms` }}>
+                  <div className="relative h-[228px]">
+                    <SafeImage src={p.url} alt={p.name} fill className="object-cover group-hover:scale-105 transition-transform duration-700" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
+                    <div className="absolute bottom-0 p-6 w-full">
+                      <div className="flex justify-between items-end">
+                        <div>
+                          <h3 className="font-heading text-xl font-bold text-white">{p.name}</h3>
+                          <p className="text-white/50 text-xs mt-1 font-sans">{p.description}</p>
+                        </div>
+                        <div className="text-right ml-4 shrink-0">
+                          <span className="text-[#C19A6B] font-heading font-black block">{p.price}</span>
+                          <a href="#contact" className="text-xs text-white/50 hover:text-[#C19A6B] font-mono tracking-widest uppercase transition-colors mt-1 block">Order →</a>
+                        </div>
                       </div>
                     </div>
                   </div>
-                ))}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Fourth Product - Cardholder Accent Panel */}
+          <div className={`mt-6 p-6 rounded-3xl bg-[#1A1A1A] border border-white/10 flex flex-col sm:flex-row items-center justify-between gap-6 transition-all duration-700 ${productsReveal.isVisible ? 'opacity-100' : 'opacity-0'}`}>
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 relative rounded-2xl overflow-hidden shrink-0">
+                <SafeImage src="https://images.unsplash.com/photo-1531190260877-c8d11eb5afaf?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080" alt="The Scout Cardholder" fill className="object-cover" />
+              </div>
+              <div>
+                <h4 className="font-heading text-lg font-bold text-white">The Scout Cardholder</h4>
+                <p className="text-white/40 text-xs font-sans">Ultra-slim, premium card companion hand-cut from vegetable-tanned leather.</p>
               </div>
             </div>
-
+            <div className="flex items-center gap-6">
+              <span className="text-[#C19A6B] font-heading text-xl font-bold">₦35,000</span>
+              <a href="#contact" className="bg-white/5 text-white hover:bg-[#C19A6B] hover:text-black border border-white/15 px-6 py-2 rounded-full font-mono text-xs font-bold transition duration-300">
+                Purchase
+              </a>
+            </div>
           </div>
+
         </div>
       </section>
 
 
-      {/* ================== PROCESS SECTION (BONUS): STEPS ================== */}
-      <section id="process" ref={processReveal.ref} className="py-28 px-6 bg-[#1E1E1E]">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-20">
-            <span className="text-secondary font-mono text-xs tracking-[0.4em] uppercase">Artisanal Workflow</span>
-            <h2 className="font-heading text-4xl md:text-6xl font-black text-white mt-4">The Hand-Forging Process</h2>
-            <p className="text-accent/40 max-w-lg mx-auto mt-4 font-light text-sm md:text-base">Witness the absolute dedication placed inside every square inch of your piece.</p>
+      {/* === PROCESS SECTION (Timeline Variant) === */}
+      <section ref={processReveal.ref} className="py-28 px-6 bg-[#1A1A1A]">
+        <div className="max-w-4xl mx-auto">
+          <div className="mb-20">
+            <p className="text-[#C19A6B] font-mono text-xs tracking-[0.3em] uppercase mb-3">THE ART OF HANDCRAFTING</p>
+            <h2 className="font-heading text-4xl md:text-6xl font-black text-white">How we turn premium hides into lifelong companions</h2>
           </div>
-
+          
           <div className="relative">
-            {/* Timeline Line */}
-            <div className="absolute left-6 top-0 bottom-0 w-px bg-gradient-to-b from-secondary/40 via-secondary/10 to-transparent hidden md:block" />
-            
-            <div className="space-y-16">
-              {STEPS.map((step, i) => (
-                <div
-                  key={i}
-                  className={`flex gap-8 items-start group transition-all duration-1000 ${
-                    processReveal.isVisible 
-                      ? 'opacity-100 translate-x-0' 
-                      : i % 2 === 0 ? 'opacity-0 -translate-x-12' : 'opacity-0 translate-x-12'
-                  }`}
-                  style={{ transitionDelay: `${i * 150}ms` }}
-                >
-                  <div className="w-12 h-12 rounded-full bg-secondary/15 border border-secondary/30
-                    flex items-center justify-center shrink-0 relative z-10
-                    group-hover:bg-secondary group-hover:border-secondary transition-all duration-500">
-                    <span className="font-mono font-black text-secondary group-hover:text-primary transition-colors text-xs">
+            <div className="absolute left-6 top-0 bottom-0 w-px bg-gradient-to-b from-[#C19A6B]/40 via-[#8B5A2B]/20 to-transparent hidden md:block" />
+            <div className="space-y-12">
+              {[
+                { number: "01", title: "Pattern Drafting & Selection", description: "Each commission begins on the workbench. Hides are inspected raw under direct light, selecting cuts with perfect natural grain structure." },
+                { number: "02", title: "The Traditional Saddle Stitch", description: "Using thick waxed thread and two needles, we pass through each awl-punched hole in opposing directions. A stitch that never unravels." },
+                { number: "03", title: "Edge Burnishing & Sealing", description: "No synthetic coatings are used. Edge lines are painstakingly hand-beveled, rubbed with organic beeswax, and polished to a glassy sheen." }
+              ].map((step, i) => (
+                <div key={i} className={`flex gap-8 items-start group transition-all duration-1000 ${processReveal.isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-12'}`} style={{ transitionDelay: `${i * 150}ms` }}>
+                  <div className="w-12 h-12 rounded-full bg-[#8B5A2B]/10 border border-[#C19A6B]/30 flex items-center justify-center shrink-0 relative z-10 group-hover:bg-[#C19A6B] group-hover:border-[#C19A6B] transition-all duration-300">
+                    <span className="font-mono font-black text-[#C19A6B] group-hover:text-black transition-colors text-sm">
                       {step.number}
                     </span>
                   </div>
-                  
-                  <div className="pt-2 border-b border-white/5 pb-8 flex-1">
-                    <h3 className="font-heading text-2xl font-bold text-white tracking-tight">{step.title}</h3>
-                    <p className="text-accent/50 mt-3 leading-relaxed text-sm md:text-base max-w-2xl">{step.description}</p>
+                  <div className="pt-2">
+                    <h3 className="font-heading text-2xl font-bold text-white group-hover:text-[#C19A6B] transition-colors duration-300">{step.title}</h3>
+                    <p className="text-white/50 mt-2 text-base leading-relaxed max-w-xl font-sans">{step.description}</p>
                   </div>
                 </div>
               ))}
@@ -612,53 +358,39 @@ export default function Home() {
       </section>
 
 
-      {/* ================== ABOUT SECTION: SPLIT WITH STATS ================== */}
-      <section id="about" ref={aboutReveal.ref} className="py-28 px-6 bg-black relative overflow-hidden">
-        
-        {/* Subtle geometric overlay */}
-        <div className="absolute top-1/2 left-0 w-96 h-96 bg-secondary/5 rounded-full blur-[120px] pointer-events-none" />
-
-        <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-16 items-center">
+      {/* === ABOUT SECTION (Story + Stats Variant V9) === */}
+      <section id="about" ref={aboutReveal.ref} className="py-28 px-6 bg-[#161616] relative overflow-hidden">
+        <div className="absolute top-1/2 left-0 w-80 h-80 bg-[#8B5A2B]/5 rounded-full blur-[100px] pointer-events-none" />
+        <div className="max-w-6xl mx-auto grid md:grid-cols-12 gap-16 items-center">
           
-          <div className={`transition-all duration-1000 ${
-            aboutReveal.isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
-          }`}>
-            <span className="text-secondary font-mono text-xs tracking-[0.4em] uppercase">Lagos Heritage</span>
-            <h2 className="font-heading text-4xl md:text-6xl font-black text-white mt-4 mb-6 leading-tight">
-              Crafted in the Heart of Lagos.
+          <div className={`md:col-span-7 transition-all duration-1000 ${aboutReveal.isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-12'}`}>
+            <p className="text-[#C19A6B] font-mono text-xs tracking-[0.3em] uppercase mb-4">THE HIDESMITH STORY</p>
+            <h2 className="font-heading text-4xl md:text-6xl font-black text-white leading-none mb-8">
+              True Leathercrafting Resurrected.
             </h2>
-            <p className="text-accent/55 text-base md:text-lg leading-relaxed font-light mb-8">
-              Hidesmith was born out of a desire to rescue old-world craftsmanship in a mass-produced age. Each item carries the touch of the artisan, utilizing heavy-grade Nigerian hides that grow richer in character with every single journey.
+            <p className="text-white/60 text-lg leading-relaxed font-sans mb-8">
+              Born in the heart of Lagos, Hidesmith Leather Co. was founded on a simple premise: modern accessories are built too cheap, and discarded too fast. We returned to the bench, to the knives, and the heavy threads. 
             </p>
-            
-            {/* Regional Slang Integrated 15% Intensity - Secondary placement */}
-            <div className="inline-flex items-center gap-3 bg-secondary/10 border border-secondary/25 px-5 py-3 rounded-2xl">
-              <div className="w-2.5 h-2.5 rounded-full bg-secondary animate-pulse" />
-              <p className="text-secondary text-sm font-medium uppercase font-mono tracking-wider">
-                Lagos Crafted. Sharp delivery, nationwide.
-              </p>
-            </div>
+            <p className="text-white/50 text-base leading-relaxed font-sans">
+              Every bag and wallet that leaves our studio is hand-cut, hand-punched, and saddle-stitched by skilled hands committed to the preservation of true leathercraft.
+            </p>
           </div>
 
-          {/* Stats V9 Reveal (Counter Rise) */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-1 gap-6">
-            {STATS.map((stat, i) => (
-              <div
-                key={i}
-                style={{ transitionDelay: `${i * 150}ms` }}
-                className={`bg-[#1E1E1E] p-8 rounded-3xl border border-white/5 transition-all duration-1000 shadow-2xl ${
-                  aboutReveal.isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <p className="font-heading text-4xl font-black text-white">{stat.number}</p>
-                  <div className="text-secondary/40">
-                    {i === 0 && <Compass size={24} />}
-                    {i === 1 && <Scissors size={24} />}
-                    {i === 2 && <Layers size={24} />}
-                  </div>
+          <div className="md:col-span-5 grid grid-cols-1 gap-6">
+            {[
+              { number: "14k+", label: "Community Followers", icon: <Users size={20} className="text-[#C19A6B]" /> },
+              { number: "100%", label: "Saddle Stitched by Hand", icon: <Heart size={20} className="text-[#C19A6B]" /> },
+              { number: "15+", label: "Artisan Hours per Duffle", icon: <Clock size={20} className="text-[#C19A6B]" /> }
+            ].map((stat, i) => (
+              <div key={i} className={`p-6 rounded-3xl bg-[#1A1A1A] border border-white/10 flex items-center gap-6 transition-all duration-1000 ${aboutReveal.isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+                style={{ transitionDelay: `${i * 150}ms` }}>
+                <div className="w-12 h-12 rounded-2xl bg-[#8B5A2B]/15 border border-[#C19A6B]/25 flex items-center justify-center shrink-0">
+                  {stat.icon}
                 </div>
-                <p className="text-accent/40 text-xs font-mono uppercase tracking-widest mt-2">{stat.label}</p>
+                <div>
+                  <p className="font-heading text-3xl font-black text-white">{stat.number}</p>
+                  <p className="text-white/40 text-xs font-mono uppercase tracking-widest mt-1">{stat.label}</p>
+                </div>
               </div>
             ))}
           </div>
@@ -667,267 +399,160 @@ export default function Home() {
       </section>
 
 
-      {/* ================== DIVIDER 3: D-GRID ================== */}
-      <div className="py-12 border-y border-white/5 bg-[#1E1E1E]">
-        <div className="max-w-5xl mx-auto flex flex-wrap justify-center gap-8">
-          {['Vegetable Tanned', 'Saddle Stitch', 'Heirloom Finish', 'Brass Rivets', 'Hand Burnished'].map((word, i) => (
-            <div key={i} className="flex items-center gap-3 text-white/30 text-xs font-mono tracking-widest uppercase">
-              <div className="w-1.5 h-1.5 rounded-full bg-secondary" />
-              {word}
-            </div>
-          ))}
-        </div>
-      </div>
-
-
-      {/* ================== TESTIMONIALS SECTION: T-MASONRY ================== */}
-      <section ref={testimonialsReveal.ref} className="py-28 px-6 bg-black/40">
+      {/* === TESTIMONIALS SECTION (T-MASONRY Variant) === */}
+      <section ref={testimonialsReveal.ref} className="py-28 px-6 bg-[#1A1A1A]">
         <div className="max-w-7xl mx-auto">
-          
           <div className="text-center mb-16">
-            <span className="text-secondary font-mono text-xs tracking-[0.4em] uppercase">Collector Feedback</span>
-            <h2 className="font-heading text-4xl md:text-6xl font-black text-white mt-4">Heirloom Stories</h2>
+            <p className="text-[#C19A6B] font-mono text-xs tracking-[0.3em] uppercase mb-3">CARRIED AROUND THE WORLD</p>
+            <h2 className="font-heading text-4xl md:text-6xl font-black text-white">Heirlooms on the Move</h2>
           </div>
-
-          <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
-            {TESTIMONIALS.map((t, i) => (
-              <div
-                key={i}
-                className={`break-inside-avoid bg-gradient-to-br from-white/[0.04] to-transparent
-                  p-8 rounded-3xl border border-white/5 relative overflow-hidden group
-                  hover:border-secondary/20 transition-all duration-500`}
-              >
-                <div className="absolute top-0 right-0 w-24 h-24 bg-secondary/5 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
-                
-                <p className="text-accent/80 text-base md:text-lg leading-relaxed italic relative z-10 font-light">
-                  &ldquo;{t.text}&rdquo;
-                </p>
+          
+          <div className="columns-1 md:columns-3 gap-6 space-y-6">
+            {[
+              { name: "Tunde Alao", text: "The Vanguard Duffle is a true masterpiece. Took it on three international flights already and it looks even better with age.", role: "Frequent Traveler" },
+              { name: "Chioma Nwachukwu", text: "Exquisite hand-stitching on my custom saddle bag. The tan shade is incredibly rich and coordinates with everything.", role: "Creative Director" },
+              { name: "Femi Balogun", text: "Incredible craftsmanship right here in Lagos. Better structural integrity than any imported designer wallet I've owned.", role: "Architect" }
+            ].map((t, i) => (
+              <div key={i} className={`break-inside-avoid bg-gradient-to-br from-white/5 to-white/2 p-8 rounded-3xl border border-white/10 relative overflow-hidden group hover:border-[#C19A6B]/25 transition-all duration-500 transition-all duration-700 ${testimonialsReveal.isVisible ? 'opacity-100 translate-y-0 blur-0' : 'opacity-0 translate-y-6 blur-sm'}`}
+                style={{ transitionDelay: `${i * 100}ms` }}>
+                <div className="absolute top-0 right-0 w-24 h-24 bg-[#8B5A2B]/5 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
+                <p className="text-white/80 text-base md:text-lg leading-relaxed relative z-10 italic">&ldquo;{t.text}&rdquo;</p>
                 
                 <div className="flex items-center justify-between border-t border-white/10 pt-5 mt-6 relative z-10">
-                  <div>
-                    <p className="font-heading font-bold text-white text-base">{t.name}</p>
-                    <p className="text-secondary text-xs uppercase tracking-wider mt-0.5 font-mono">{t.role}</p>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-[#8B5A2B]/20 flex items-center justify-center text-[#C19A6B] font-bold text-sm border border-[#C19A6B]/25">
+                      {t.name.charAt(0)}
+                    </div>
+                    <div>
+                      <p className="font-heading font-bold text-white leading-tight">{t.name}</p>
+                      <p className="text-white/40 text-xs mt-0.5 font-sans">{t.role}</p>
+                    </div>
                   </div>
-                  
-                  <div className="w-10 h-10 rounded-full bg-secondary/15 flex items-center justify-center text-secondary font-bold text-xs uppercase font-mono">
-                    {t.name.charAt(0)}
+                  <div className="flex gap-1 shrink-0">
+                    {[1, 2, 3].map(n => <div key={n} className="w-1.5 h-1.5 rounded-full bg-[#C19A6B]/60" />)}
                   </div>
                 </div>
               </div>
             ))}
           </div>
-
         </div>
       </section>
 
 
-      {/* ================== CONTACT SECTION: C2 ASYMMETRIC GLASS OVERLAP ================== */}
-      <section id="contact" ref={contactReveal.ref} className="py-28 px-6 bg-[#1E1E1E] relative overflow-hidden">
-        
-        {/* Soft Background Accent Orbs */}
-        <div className="absolute bottom-0 right-0 w-96 h-96 bg-secondary/10 rounded-full blur-[140px] pointer-events-none" />
-        <div className="absolute top-0 left-0 w-72 h-72 bg-accent/5 rounded-full blur-[100px] pointer-events-none" />
-
-        <div className="max-w-6xl mx-auto relative z-10 grid md:grid-cols-[1.2fr_1fr] gap-12 items-center">
+      {/* === CONTACT SECTION (C3 Minimal Centered + Universal Form) === */}
+      <section id="contact" ref={contactReveal.ref} className="py-28 px-6 bg-[#161616]">
+        <div className="max-w-2xl mx-auto text-center">
+          <p className="text-[#C19A6B] font-mono text-xs tracking-[0.4em] uppercase mb-4 opacity-70">CONTACT</p>
+          <h2 className="font-heading text-4xl md:text-6xl font-black text-white mb-6">Commission Your Heirloom</h2>
+          <p className="text-white/50 mb-12 text-base md:text-lg font-sans">
+            Bespoke leather bags, wallets, and accessories handcrafted to order in Lagos, blending rugged refinement with timeless functionality.
+          </p>
           
-          {/* Glassmorphic Form Card */}
-          <div className="bg-black/40 backdrop-blur-3xl p-8 sm:p-12 rounded-[2rem] border border-white/10 shadow-2xl relative">
-            
+          <div className={`text-left transition-all duration-1000 ${contactReveal.isVisible ? 'scale-100 opacity-100' : 'scale-95 opacity-0'}`}>
             {sent ? (
-              <div className="flex flex-col items-center justify-center py-12 text-center animate-scaleIn">
-                <div className="w-20 h-20 rounded-full bg-secondary/20 flex items-center justify-center mb-6 border border-secondary/40 shadow-[0_0_30px_rgba(200,138,88,0.2)]">
-                  <CheckCheck size={32} className="text-secondary" />
+              <div className="flex flex-col items-center justify-center p-12 text-center animate-scaleIn bg-[#0d0d0d] rounded-3xl border border-white/10 shadow-2xl relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-[#8B5A2B]/10 to-transparent opacity-50" />
+                <div className="w-20 h-20 rounded-full bg-[#8B5A2B]/20 flex items-center justify-center mb-6 border border-[#C19A6B]/40 relative z-10 shadow-[0_0_30px_rgba(255,255,255,0.1)]">
+                  <CheckCheck size={32} className="text-[#C19A6B]" />
                 </div>
-                <h3 className="font-heading text-3xl font-black text-white mb-3">Commission Initiated</h3>
-                <p className="text-accent/60 max-w-sm text-sm md:text-base leading-relaxed">
-                  Thank you for reaching out. A master leathercrafter will review your specification and message you back within 24 hours.
-                </p>
+                <h3 className="font-heading text-3xl font-black text-white mb-3 relative z-10">Message Sent</h3>
+                <p className="text-white/60 max-w-sm text-base relative z-10">Thank you. Our team will review your inquiry and respond shortly.</p>
               </div>
             ) : (
-              <form onSubmit={handleFormSubmit} className="space-y-4">
-                <div className="mb-6">
-                  <h3 className="font-heading text-2xl font-bold text-white tracking-tight">Commission Your Piece</h3>
-                  <p className="text-accent/50 text-xs mt-1 font-mono uppercase tracking-wider">Meticulously handcrafted to specification</p>
-                </div>
-
-                <div className="space-y-4">
-                  {(['name', 'email', 'phone'] as const).map(field => (
-                    <div key={field} className="relative group">
-                      <input
-                        type={field === 'email' ? 'email' : 'text'}
-                        placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
-                        value={form[field]}
-                        onChange={e => setForm(prev => ({ ...prev, [field]: e.target.value }))}
-                        required={field !== 'phone'}
-                        className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4 text-white placeholder-white/30 text-sm outline-none transition-all duration-300 focus:bg-white/10 focus:border-secondary focus:ring-1 focus:ring-secondary"
+              <form onSubmit={handleSubmit} className="space-y-4 bg-[#0d0d0d] p-8 sm:p-10 rounded-3xl border border-white/10 shadow-2xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-[#8B5A2B]/10 blur-[80px] rounded-full pointer-events-none" />
+                <div className="relative z-10">
+                  <h3 className="font-heading text-2xl font-bold text-white mb-8">Send an Inquiry</h3>
+                  <div className="space-y-4">
+                    {(['name', 'email', 'phone'] as const).map(field => (
+                      <div key={field} className="relative group">
+                        <input
+                          type={field === 'email' ? 'email' : 'text'}
+                          placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
+                          value={form[field]}
+                          onChange={e => setForm(prev => ({ ...prev, [field]: e.target.value }))}
+                          required={field !== 'phone'}
+                          className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4 text-white placeholder-white/40 text-sm outline-none transition-all duration-300 focus:bg-white/10 focus:border-[#C19A6B] focus:ring-1 focus:ring-[#C19A6B] group-hover:border-white/20"
+                        />
+                      </div>
+                    ))}
+                    <div className="relative group">
+                      <textarea rows={4} placeholder="Your message"
+                        value={form.message}
+                        onChange={e => setForm(prev => ({ ...prev, message: e.target.value }))}
+                        required
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4 text-white placeholder-white/40 text-sm outline-none resize-none transition-all duration-300 focus:bg-white/10 focus:border-[#C19A6B] focus:ring-1 focus:ring-[#C19A6B] group-hover:border-white/20"
                       />
                     </div>
-                  ))}
-                  <div className="relative group">
-                    <textarea
-                      rows={4}
-                      placeholder="Specify your design concept, desired leather colorway, or general questions..."
-                      value={form.message}
-                      onChange={e => setForm(prev => ({ ...prev, message: e.target.value }))}
-                      required
-                      className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4 text-white placeholder-white/30 text-sm outline-none resize-none transition-all duration-300 focus:bg-white/10 focus:border-secondary focus:ring-1 focus:ring-secondary"
-                    />
                   </div>
+                  <button type="submit" disabled={loading}
+                    className="w-full mt-8 bg-[#C19A6B] text-black py-4 rounded-xl font-bold text-base hover:brightness-110 hover:shadow-[0_0_20px_rgba(255,255,255,0.15)] transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed flex justify-center items-center gap-3 group">
+                    {loading ? (
+                      <span className="flex items-center gap-2">
+                        <Loader2 className="animate-spin" size={20} /> Processing...
+                      </span>
+                    ) : (
+                      <>
+                        Send Message <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                      </>
+                    )}
+                  </button>
                 </div>
-
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full mt-6 bg-secondary text-primary py-4 rounded-xl font-bold text-sm tracking-widest uppercase hover:brightness-110 hover:shadow-[0_0_20px_rgba(200,138,88,0.2)] transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed flex justify-center items-center gap-3 group"
-                >
-                  {loading ? (
-                    <span className="flex items-center gap-2">
-                      <Loader2 className="animate-spin" size={18} /> Processing...
-                    </span>
-                  ) : (
-                    <>
-                      Submit Specification <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
-                    </>
-                  )}
-                </button>
               </form>
             )}
-
           </div>
-
-          {/* Left Text Detail Grid */}
-          <div className="md:pl-6 text-left">
-            <span className="text-secondary font-mono text-xs tracking-[0.4em] uppercase">Custom Order</span>
-            <h2 className="font-heading text-4xl md:text-6xl font-black text-white mt-4 mb-6 leading-tight">
-              Let&apos;s Build a Legacy Piece.
-            </h2>
-            <p className="text-accent/40 text-base md:text-lg mb-10 font-light leading-relaxed">
-              Have a custom vision? We build bags, portfolios, and leather accoutrements specifically matched to individual specifications. Enter your requirements, and let&apos;s sketch.
-            </p>
-
-            <div className="space-y-6">
-              <div className="flex items-center gap-4 group">
-                <div className="w-12 h-12 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center text-secondary">
-                  <Phone size={18} />
-                </div>
-                <div>
-                  <p className="text-accent/40 text-[10px] font-mono uppercase tracking-widest leading-none">WhatsApp Order</p>
-                  <a href="https://wa.me/c/2348023456789" className="text-white hover:text-secondary font-medium mt-1 block transition-colors">+234 802 345 6789</a>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-4 group">
-                <div className="w-12 h-12 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center text-secondary">
-                  <Instagram size={18} />
-                </div>
-                <div>
-                  <p className="text-accent/40 text-[10px] font-mono uppercase tracking-widest leading-none">Instagram Portfolio</p>
-                  <a href="https://instagram.com/hidesmith.ng" className="text-white hover:text-secondary font-medium mt-1 block transition-colors">@hidesmith.ng</a>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-4 group">
-                <div className="w-12 h-12 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center text-secondary">
-                  <MapPin size={18} />
-                </div>
-                <div>
-                  <p className="text-accent/40 text-[10px] font-mono uppercase tracking-widest leading-none">Lagos Workshop</p>
-                  <p className="text-white font-medium mt-1">Lagos, Nigeria</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
         </div>
       </section>
 
 
-      {/* ================== FOOTER: F1 STANDARD EXCELLENCE ================== */}
-      <footer className="bg-black py-20 px-6 border-t border-white/5 relative">
-        <div className="max-w-6xl mx-auto">
+      {/* === FOOTER === */}
+      <footer className="bg-[#0D0D0D] border-t border-white/5 pt-20 pb-12 px-6 md:px-12 relative overflow-hidden">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12 mb-16 relative z-10">
           
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
-            
-            {/* Column 1: Brand details */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 border border-secondary flex items-center justify-center font-bold text-sm bg-black text-secondary">
-                  H
-                </div>
-                <span className="font-heading font-black text-base tracking-tight text-white uppercase">Hidesmith</span>
-              </div>
-              <p className="text-accent/40 text-xs md:text-sm leading-relaxed font-light">
-                Meticulously constructing bespoke, lifetime durability hand-stitched leather products out of our workshop in Lagos, Nigeria.
-              </p>
-            </div>
-
-            {/* Column 2: Navigation Links */}
-            <div>
-              <p className="text-secondary font-mono text-xs tracking-wider uppercase mb-5">Quick Access</p>
-              <ul className="space-y-2 text-sm">
-                {[
-                  { name: "Home", id: "home" },
-                  { name: "Creed", id: "features" },
-                  { name: "Collection", id: "products" },
-                  { name: "Process", id: "process" },
-                  { name: "About", id: "about" }
-                ].map((link) => (
-                  <li key={link.id}>
-                    <a
-                      href={`#${link.id}`}
-                      onClick={(e) => handleNavClick(e, link.id)}
-                      className="text-accent/50 hover:text-white transition-colors duration-200"
-                    >
-                      {link.name}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Column 3: The Collection */}
-            <div>
-              <p className="text-secondary font-mono text-xs tracking-wider uppercase mb-5">Our Collection</p>
-              <ul className="space-y-2 text-sm text-accent/50">
-                {PRODUCTS.map((p, i) => (
-                  <li key={i}>
-                    <a href="#products" onClick={(e) => handleNavClick(e, 'products')} className="hover:text-white transition-colors">
-                      {p.name}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Column 4: Contact & Location */}
-            <div>
-              <p className="text-secondary font-mono text-xs tracking-wider uppercase mb-5">Lagos Workshop</p>
-              <p className="text-accent/50 text-sm leading-relaxed mb-4">
-                Lagos, Nigeria
-              </p>
-              <div className="flex gap-4">
-                <a href="https://wa.me/c/2348023456789" className="w-8 h-8 rounded-full border border-white/10 flex items-center justify-center text-accent/60 hover:text-white hover:border-secondary transition-all">
-                  <Phone size={14} />
-                </a>
-                <a href="https://instagram.com/hidesmith.ng" className="w-8 h-8 rounded-full border border-white/10 flex items-center justify-center text-accent/60 hover:text-white hover:border-secondary transition-all">
-                  <Instagram size={14} />
-                </a>
-              </div>
-            </div>
-
-          </div>
-
-          {/* Bottom Copyright Block */}
-          <div className="border-t border-white/10 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-accent/30 text-xs font-mono">
-              &copy; {new Date().getFullYear()} Hidesmith Leather Co. All rights reserved.
+          <div className="space-y-4 md:col-span-2">
+            <span className="font-heading text-2xl font-bold tracking-widest text-white">HIDESMITH</span>
+            <p className="text-white/40 text-sm max-w-sm font-sans leading-relaxed">
+              Bespoke leather bags, wallets, and accessories handcrafted to order in Lagos. Blending rugged refinement with timeless functionality.
             </p>
-            <div className="flex gap-6 text-xs text-accent/30 font-mono">
-              <span>Lagos, Nigeria</span>
-              <span className="text-secondary">Sharp delivery, nationwide.</span>
+            {/* Regional Slang Usage (15% intensity - one secondary location only) */}
+            <p className="text-[#C19A6B]/80 font-mono text-xs tracking-wider">
+              Sharp delivery, nationwide. Crafted in Lagos, sorted for life.
+            </p>
+          </div>
+
+          <div>
+            <h4 className="font-mono text-xs uppercase tracking-widest text-[#C19A6B] mb-6">Explore</h4>
+            <ul className="space-y-3 font-sans text-sm text-white/50">
+              <li><a href="#hero" className="hover:text-white transition-colors">Home</a></li>
+              <li><a href="#features" className="hover:text-white transition-colors">The Standard</a></li>
+              <li><a href="#products" className="hover:text-white transition-colors">Signature Pieces</a></li>
+              <li><a href="#about" className="hover:text-white transition-colors">Our Story</a></li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="font-mono text-xs uppercase tracking-widest text-[#C19A6B] mb-6">Contact & Socials</h4>
+            <div className="space-y-4">
+              <a href="https://wa.me/c/2348023456789" className="flex items-center gap-3 text-white/50 hover:text-[#C19A6B] transition-colors group">
+                <MessageSquare size={16} className="group-hover:scale-110 transition-transform" />
+                <span className="text-sm">wa.me/c/2348023456789</span>
+              </a>
+              <a href="https://instagram.com/hidesmith.ng" className="flex items-center gap-3 text-white/50 hover:text-[#C19A6B] transition-colors group">
+                <Instagram size={16} className="group-hover:scale-110 transition-transform" />
+                <span className="text-sm">@hidesmith.ng</span>
+              </a>
             </div>
           </div>
 
+        </div>
+
+        <div className="max-w-7xl mx-auto border-t border-white/5 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 relative z-10">
+          <p className="text-white/30 text-xs font-mono">
+            &copy; {new Date().getFullYear()} HIDESMITH LEATHER CO. ALL RIGHTS RESERVED.
+          </p>
+          <p className="text-white/35 text-xs font-mono tracking-widest uppercase">
+            LAGOS, NIGERIA
+          </p>
         </div>
       </footer>
 
